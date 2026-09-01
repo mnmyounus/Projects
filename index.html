@@ -338,7 +338,63 @@ td.mono-cell{font-family:'JetBrains Mono',monospace;color:var(--fg);font-size:12
 </script>
 </head>
 <body>
+<!-- Hidden Audio Player Engine -->
+<audio id="bgMusicPlayer" preload="auto"></audio>
+<!-- Visible Status Bar -->
+<div style="position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.85); color: #fff; padding: 10px 16px; border-radius: 20px; font-family: sans-serif; font-size: 14px; z-index: 9999; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display:flex; align-items:center; gap:10px;">
+  <span id="bgMusicStatus">Click anywhere to start music</span>
+  <button id="bgMusicMuteBtn" aria-label="Mute music" style="background:rgba(255,255,255,0.15); border:none; color:#fff; width:24px; height:24px; border-radius:50%; cursor:pointer; font-size:12px; line-height:1; flex-shrink:0; display:flex; align-items:center; justify-content:center;">🔊</button>
+</div>
+<script>
+  const playlistFiles = [
+    { title: "Song 1", file: "song1.mp3" },
+    { title: "Song 2", file: "song2.mp3" },
+    { title: "Song 3", file: "song3.mp3" }
+  ];
+  let playedCount = 0;
+  let isMuted = false;
+  const player = document.getElementById('bgMusicPlayer');
+  const statusTxt = document.getElementById('bgMusicStatus');
+  const muteBtn = document.getElementById('bgMusicMuteBtn');
 
+  function loadAndPlayTrack(index) {
+    player.src = playlistFiles[index].file;
+    statusTxt.innerText = "";
+
+    player.play().catch(err => {
+      console.log("Autoplay blocked until user interacts with page.");
+    });
+  }
+  function getNextTrackIndex() {
+    playedCount++;
+    // Play 1, 2, 3 first in sequence
+    if (playedCount < 3) {
+      return playedCount;
+    }
+    // Pick a random song indefinitely after song 3
+    return Math.floor(Math.random() * playlistFiles.length);
+  }
+  // Automatic playback handling on track end
+  player.onended = function() {
+    const nextIndex = getNextTrackIndex();
+    loadAndPlayTrack(nextIndex);
+  };
+  // Triggers playback on initial page click
+  document.addEventListener('click', function unlockAudio() {
+    if (!player.src) {
+      loadAndPlayTrack(0);
+    }
+  }, { once: true });
+
+  // Mute/unmute toggle
+  muteBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    isMuted = !isMuted;
+    player.muted = isMuted;
+    muteBtn.textContent = isMuted ? "🔇" : "🔊";
+    muteBtn.setAttribute("aria-label", isMuted ? "Unmute music" : "Mute music");
+  });
+</script>
 <header class="site-header">
   <div class="header-inner">
     <a class="brand" href="#home" data-app-link="home">
